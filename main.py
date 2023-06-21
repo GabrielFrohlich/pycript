@@ -66,8 +66,11 @@ def encryptFile():
         print("Voltando para o menu")
         return
     
-    print(key_size, int(key_size)/8)
-    print(os.urandom(int(int(key_size)/8)))
+    key = os.urandom(int(int(key_size)/8))
+    vi = os.urandom(int(int(key_size)/8))
+    AES.new(key, AES.MODE_CTR)
+
+
     
 
 print("                                   _   \n\
