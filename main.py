@@ -1,5 +1,8 @@
 from Crypto.PublicKey import RSA;
+from Crypto.Cipher import PKCS1_OAEP;
 from Crypto.Cipher import AES;
+from Crypto.Random import get_random_bytes;
+from Crypto.Random.random import getrandbits;
 import os
 
 
@@ -7,8 +10,6 @@ def generateRSAKey():
     flag = 0
     while(flag == 0):
         entrada = input("Digite o tamanho da chave desejada: ")
-
-        print(entrada)
 
         if(entrada not in ["512", "1024", "2048", "4096"]):
             print("Valor de chave não válido. Necessário ser 512, 1024, 2048 ou 4096!")
@@ -34,15 +35,30 @@ def generateRSAKey():
     return 
 
 def encryptFile():
-    encrypt_file = input("Digite o nome do arquivo com extensão que você deseja criptografar: ")
+    encrypt_file = input("Digite o nome do arquivo com extensão que você deseja criptografar: \n")
+    
     flag = 0
     while flag == 0:
         try:
-            open(encrypt_file, 'r')
+            print(encrypt_file)
+            file = open(encrypt_file, 'rb')
             flag=1
         except:
             print("Arquivo não encontrado")
-            encrypt_file = input("Digite o nome do arquivo com extensão que você deseja criptografar ou digite ### para voltar ao menu: ")
+            encrypt_file = input("Digite o nome do arquivo com extensão que você deseja criptografar ou digite ### para voltar ao menu: \n")
+            if(encrypt_file == '###'):
+                flag=2
+    
+    pub_rsa = input("Digite o nome do arquivo que contenha a chave pública do destinatário: \n")
+    
+    flag = 0
+    while flag == 0:
+        try:
+            pub_rsa_file = open(pub_rsa, 'rb')
+            flag=1
+        except:
+            print("Arquivo não encontrado")
+            pub_rsa = input("Digite o nome do arquivo que contenha a chave pública do destinatário ou digite ### para voltar ao menu: \n")
             if(encrypt_file == '###'):
                 flag=2
 
@@ -50,7 +66,7 @@ def encryptFile():
         print("Voltando para o menu.")
         return
 
-    key_size = input("Digite o tamanho da chave para que o arquivo seja criptografado.")
+    key_size = input("Digite o tamanho da chave para que o arquivo seja criptografado:\n")
 
     flag = 0
     while flag == 0:
@@ -58,7 +74,7 @@ def encryptFile():
             flag=1
         else:
             print("Tamanho inválido!")
-            key_size = input("Digite o tamanho da chave para que o arquivo seja criptografado ou ### para voltar ao menu.")
+            key_size = input("Digite o tamanho da chave para que o arquivo seja criptografado ou ### para voltar ao menu: \n")
             if(key_size == '###'):
                 flag=2
     
@@ -66,10 +82,29 @@ def encryptFile():
         print("Voltando para o menu")
         return
     
-    key = os.urandom(int(int(key_size)/8))
-    vi = os.urandom(int(int(key_size)/8))
-    AES.new(key, AES.MODE_CTR)
+    key = get_random_bytes(int(int(key_size)/8))
+    nonce = getrandbits(4)
+    cipher = AES.new(key, AES.MODE_CTR, nonce=nonce.to_bytes())
 
+
+    teste = cipher.encrypt(file.read())
+    file.close()
+
+    encrypted_file = open(encrypt_file+".enc", "wb")
+
+    encrypted_file.write(teste)
+
+    encrypted_file.close()
+
+    print("O arquivo {}.enc foi gerado e está encriptado".format(encrypt_file))
+
+    rsa_key = RSA.importKey(pub_rsa_file.read())
+    cipher = PKCS1_OAEP.new(rsa_key)
+    
+    keys_enc = open("keys.enc", "wb")
+    keys_enc.write(cipher.encrypt(bytes("{},{}".format(key.hex(), nonce), "utf-8")))
+    keys_enc.close()
+    print("O arquivo keys.enc foi gerado contendo as chaves encriptadas")
 
     
 
