@@ -35,12 +35,13 @@ def generateRSAKey():
     return 
 
 def encryptFile():
+    if(input("Para este modo, as chaves já devem estar geradas e o arquivo para criptografar precisa existir na pasta do projeto.\nAperte enter para continuar, ou digite 1 para voltar.") == '1'):
+        return
     encrypt_file = input("Digite o nome do arquivo com extensão que você deseja criptografar: \n")
     
     flag = 0
     while flag == 0:
         try:
-            print(encrypt_file)
             file = open(encrypt_file, 'rb')
             flag=1
         except:
@@ -48,6 +49,10 @@ def encryptFile():
             encrypt_file = input("Digite o nome do arquivo com extensão que você deseja criptografar ou digite ### para voltar ao menu: \n")
             if(encrypt_file == '###'):
                 flag=2
+
+    if(flag==2):
+        print("Voltando para o menu.")
+        return
     
     pub_rsa = input("Digite o nome do arquivo que contenha a chave pública do destinatário: \n")
     
@@ -106,7 +111,57 @@ def encryptFile():
     keys_enc.close()
     print("O arquivo keys.enc foi gerado contendo as chaves encriptadas")
 
+
+def decryptFile():
+    if(input("Para este modo, as chaves já devem estar geradas e o arquivo keys.enc precisa existir na pasta do projeto .\nAperte enter para continuar, ou digite 1 para voltar.") == '1'):
+        return
     
+    encrypted_file_name = input("Digite o nome do arquivo com extensão que você deseja descriptografar: \n")
+    
+    flag = 0
+    while flag == 0:
+        try:
+            encrypted_file = open(encrypted_file_name, 'rb')
+            flag=1
+        except:
+            print("Arquivo não encontrado")
+            encrypted_file_name = input("Digite o nome do arquivo com extensão que você deseja descriptografar ou digite ### para voltar ao menu: \n")
+            if(encrypted_file_name == '###'):
+                flag=2
+
+    if(flag==2):
+        print("Voltando para o menu.")
+        return
+
+
+    key_size = input("Digite o tamanho da chave para que o arquivo seja criptografado:\n")
+
+    flag = 0
+    while flag == 0:
+        if(key_size in ['128', '256']):
+            flag=1
+        else:
+            print("Tamanho inválido! Deve ser 128 ou 256")
+            key_size = input("Digite o tamanho da chave para que o arquivo seja criptografado ou ### para voltar ao menu: \n")
+            if(key_size == '###'):
+                flag=2
+    
+    if(flag==2):
+        print("Voltando para o menu")
+        return
+
+    private_key = PKCS1_OAEP.new(RSA.importKey(open("{}.pr".format(nome)).read()))
+
+    aes_keys = private_key.decrypt(open("keys.enc", "rb").read())
+
+    keys = aes_keys.decode().split(',')
+
+    aes_cipher = AES.new(bytes.fromhex(keys[0]), AES.MODE_CTR, nonce=int(keys[1]).to_bytes())
+
+    ptext = open("original_file.txt", "wb")
+    ptext.write(aes_cipher.decrypt(encrypted_file.read()))
+
+
 
 print("                                   _   \n\
                                   | |  \n\
@@ -127,6 +182,7 @@ while control_flag == 0:
 Escolha uma das opções abaixo:\n\
 1. Gerar chave RSA\n\
 2. Criptografar um arquivo\n\
+3. Descriptografar\n\
 0. Sair do PyCrypt\n")
 
     entrada = input("Digite a opção: ")
@@ -135,6 +191,8 @@ Escolha uma das opções abaixo:\n\
             generateRSAKey()
         case '2':
             encryptFile()
+        case '3':
+            decryptFile()
         case '0':
             control_flag = 1
             print("Saindo do pycrypt!")
