@@ -158,8 +158,10 @@ def decryptFile():
 
     aes_cipher = AES.new(bytes.fromhex(keys[0]), AES.MODE_CTR, nonce=int(keys[1]).to_bytes())
 
-    ptext = open("original_file.txt", "wb")
+    ptext = open("original_file", "wb")
     ptext.write(aes_cipher.decrypt(encrypted_file.read()))
+
+    print("Arquivo descriptografado para original_file")
 
 
 
